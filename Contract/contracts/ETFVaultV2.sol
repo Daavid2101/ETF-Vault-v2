@@ -66,8 +66,10 @@ contract ETFVaultV2 is ERC20, Ownable, ReentrancyGuard {
     constructor(
         string[] memory _initialTokenNames,
         uint256[] memory _initialPercentages,
-        address[] memory _rebalancers
-    ) ERC20("ETF Vault Token", "vETF") Ownable(msg.sender) {
+        address[] memory _rebalancers,
+        string memory _name,
+        string memory _symbol
+    ) ERC20(_name, _symbol) Ownable(msg.sender) {
         require(_initialTokenNames.length == _initialPercentages.length, "Tokens and percentages mismatch");
 
         uint256 totalPct = 0;
