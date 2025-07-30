@@ -1,543 +1,811 @@
-import React, { useState } from "react";
-import {
-  WagmiProvider,
-  createConfig,
-  http,
-  useAccount,
-  useConnect,
-  useDisconnect,
-  useReadContract,
-  useWriteContract,
-} from "wagmi";
-import { metaMask } from "@wagmi/connectors";
-import { base } from "wagmi/chains";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { formatUnits, parseUnits, parseAbi } from "viem";
-import { 
-  Wallet, 
-  TrendingUp, 
-  DollarSign, 
-  PieChart, 
-  ArrowUpRight, 
-  ArrowDownLeft,
-  Coins,
-  RefreshCw,
-  Activity,
-  BarChart3,
-  Settings,
-  LogOut
-} from "lucide-react";
+import { useState, useEffect } from 'react';
+import { useAccount, useReadContracts, usePublicClient, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { hexToBigInt, formatUnits, parseUnits } from 'viem';
 
-// ---------------------------------------------------------------------------
-// Wagmi Config & QueryClient
-// ---------------------------------------------------------------------------
-const wagmiConfig = createConfig({
-  chains: [base],
-  transports: { [base.id]: http("https://mainnet.base.org") },
-  connectors: [metaMask()],
-  ssr: false,
-});
-const queryClient = new QueryClient();
+const FACTORY_ADDRESS = import.meta.env.VITE_FACTORY_ADDRESS;
 
-// ---------------------------------------------------------------------------
-// Contract & Feed Addresses
-// ---------------------------------------------------------------------------
-const vaultAddress = "0x0D1B9ea40F271c0f2b876A696104f58A6D6c3Ed9";
-const usdcAddress = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+const FACTORY_ABI = [
+  {
+    "name": "vaults",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [
+      {
+        "name": "index",
+        "type": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "name": "createVault",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      {
+        "name": "_tokenNames",
+        "type": "string[]"
+      },
+      {
+        "name": "_percentages",
+        "type": "uint256[]"
+      },
+      {
+        "name": "_name",
+        "type": "string"
+      },
+      {
+        "name": "_symbol",
+        "type": "string"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "address"
+      }
+    ]
+  }
+];
 
-const feedEthUsd = "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70";
-const feedBtcUsd = "0x64c911996D3c6aC71f9b455B1E8E7266BcbD848F";
+const VAULT_ABI = [
+  {
+    "name": "getTokens",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "address[]"
+      }
+    ]
+  },
+  {
+    "name": "getAllocations",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "uint256[]"
+      }
+    ]
+  },
+  {
+    "name": "holdings",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "uint256"
+      },
+      {
+        "type": "uint256[]"
+      }
+    ]
+  },
+  {
+    "name": "deposit",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      {
+        "name": "amountIn",
+        "type": "uint256"
+      },
+      {
+        "name": "poolFees",
+        "type": "uint24[]"
+      },
+      {
+        "name": "minOuts",
+        "type": "uint256[]"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "withdraw",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      {
+        "name": "shares",
+        "type": "uint256"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "withdrawUSDC",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      {
+        "name": "shares",
+        "type": "uint256"
+      },
+      {
+        "name": "poolFees",
+        "type": "uint24[]"
+      },
+      {
+        "name": "minOuts",
+        "type": "uint256[]"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "isRebalancer",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "name": "rebalance",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      {
+        "name": "newTokenNames",
+        "type": "string[]"
+      },
+      {
+        "name": "newPercentages",
+        "type": "uint256[]"
+      },
+      {
+        "name": "poolFeesToUSDC",
+        "type": "uint24[]"
+      },
+      {
+        "name": "minOutsToUSDC",
+        "type": "uint256[]"
+      },
+      {
+        "name": "poolFeesFromUSDC",
+        "type": "uint24[]"
+      },
+      {
+        "name": "minOutsFromUSDC",
+        "type": "uint256[]"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "totalAssets",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "uint256"
+      }
+    ]
+  },
+  {
+    "name": "totalSupply",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "uint256"
+      }
+    ]
+  }
+];
 
-// ---------------------------------------------------------------------------
-// ABIs
-// ---------------------------------------------------------------------------
-const vaultAbi = parseAbi([
-  "function deposit(uint256 amountIn,uint24 feeWETH,uint24 feeWBTC,uint256 minOutWETH,uint256 minOutWBTC)",
-  "function withdraw(uint256 shares)",
-  "function withdrawUSDC(uint256 shares,uint24 poolFeeETHtoUSDC,uint24 poolFeeBTCtoUSDC,uint256 minOutETH,uint256 minOutBTC)",
-  "function totalAssets() view returns (uint256)",
-  "function totalSupply() view returns (uint256)",
-  "function balanceOf(address) view returns (uint256)",
-  "function holdings() view returns (uint256 usdcBal,uint256 wethBal,uint256 wbtcBal)",
-]);
+const ERC20_ABI = [
+  {
+    "name": "symbol",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "string"
+      }
+    ]
+  },
+  {
+    "name": "decimals",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "uint8"
+      }
+    ]
+  },
+  {
+    "name": "approve",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      {
+        "name": "spender",
+        "type": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "name": "balanceOf",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "uint256"
+      }
+    ]
+  }
+];
 
-const erc20Abi = parseAbi([
-  "function approve(address spender,uint256 amount) returns (bool)",
-]);
+const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+const USDC_SYMBOL = "USDC";
+const USDC_DECIMALS = 6;
+const SHARES_DECIMALS = 18;
 
-const feedAbi = parseAbi([
-  "function latestRoundData() view returns (uint80 roundId,int256 answer,uint256 startedAt,uint256 updatedAt,uint80 answeredInRound)"
-]);
+const TOKEN_OPTIONS = ['WETH', 'cbBTC', 'cbXRP'];
 
-// ---------------------------------------------------------------------------
-// Helper functions
-// ---------------------------------------------------------------------------
-const toNumber = (bn, decimals) => Number(formatUnits(bn ?? 0n, decimals));
-
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
+const TOKEN_INFO = {
+  "0x4200000000000000000000000000000000000006": { symbol: "WETH", decimals: 18 },
+  "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf": { symbol: "cbBTC", decimals: 18 },
+  "0xcb585250f852C6c6bf90434AB21A00f02833a4af": { symbol: "cbXRP", decimals: 6 },
 };
 
-const formatNumber = (value, decimals = 2) => {
-  return new Intl.NumberFormat('de-DE', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(value);
-};
-
-// ---------------------------------------------------------------------------
-// Main Component
-// ---------------------------------------------------------------------------
-function VaultUI() {
+const App = () => {
   const { address, isConnected } = useAccount();
-  const { connect } = useConnect();
-  const { disconnect } = useDisconnect();
-  const { writeContractAsync } = useWriteContract();
+  const publicClient = usePublicClient();
+  const [vaultLength, setVaultLength] = useState(0);
+  const [vaults, setVaults] = useState([]);
+  const [allTokens, setAllTokens] = useState([]);
+  const [vaultDetails, setVaultDetails] = useState([]);
+  const [userInvestments, setUserInvestments] = useState([]);
+  const [error, setError] = useState(null);
+  const [depositAmounts, setDepositAmounts] = useState({});
+  const [withdrawAmounts, setWithdrawAmounts] = useState({});
+  const [txHash, setTxHash] = useState(null);
+  const { data: txReceipt } = useWaitForTransactionReceipt({ hash: txHash });
+  const [tokenDetailsMap, setTokenDetailsMap] = useState({});
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [vaultName, setVaultName] = useState('');
+  const [vaultSymbol, setVaultSymbol] = useState('');
+  const [selectedToken, setSelectedToken] = useState(TOKEN_OPTIONS[0]);
+  const [tokenPercent, setTokenPercent] = useState('');
+  const [selectedAllocations, setSelectedAllocations] = useState([]);
+  const [rebalanceAllocations, setRebalanceAllocations] = useState({});
+  const [selectedRebalanceTokens, setSelectedRebalanceTokens] = useState({});
+  const [rebalanceTokenPercents, setRebalanceTokenPercents] = useState({});
 
-  const [depositAmount, setDepositAmount] = useState("");
-  const [withdrawShares, setWithdrawShares] = useState("");
-  const [withdrawMode, setWithdrawMode] = useState('assets');
-
-  // ------- Reads ----------------------------------------------------------
-  const { data: totalAssets } = useReadContract({
-    address: vaultAddress,
-    abi: vaultAbi,
-    functionName: "totalAssets",
-    watch: true,
-  });
-  const { data: totalSupply } = useReadContract({
-    address: vaultAddress,
-    abi: vaultAbi,
-    functionName: "totalSupply",
-    watch: true,
-  });
-  const { data: myShares } = useReadContract({
-    address: vaultAddress,
-    abi: vaultAbi,
-    functionName: "balanceOf",
-    args: [address ?? "0x0000000000000000000000000000000000000000"],
-    enabled: Boolean(address),
-    watch: true,
-  });
-  const { data: holdings } = useReadContract({
-    address: vaultAddress,
-    abi: vaultAbi,
-    functionName: "holdings",
-    watch: true,
-  });
-
-  const { data: ethFeed } = useReadContract({
-    address: feedEthUsd,
-    abi: feedAbi,
-    functionName: "latestRoundData",
-    watch: true,
-  });
-  const { data: btcFeed } = useReadContract({
-    address: feedBtcUsd,
-    abi: feedAbi,
-    functionName: "latestRoundData",
-    watch: true,
-  });
-
-  // ------- Derived numbers -----------------------------------------------
-  const ethPrice = ethFeed ? Number(ethFeed[1]) / 1e8 : 0;
-  const btcPrice = btcFeed ? Number(btcFeed[1]) / 1e8 : 0;
-
-  const navPerShare =
-    totalAssets && totalSupply && totalSupply > 0n ?
-      toNumber(totalAssets, 6) / toNumber(totalSupply, 18) : 0;
-
-  const walletShares = myShares ? toNumber(myShares, 18) : 0;
-  const walletValue = walletShares * navPerShare;
-
-  const usdcBal = holdings ? toNumber(holdings[0], 6) : 0;
-  const wethBal = holdings ? toNumber(holdings[1], 18) : 0;
-  const wbtcBal = holdings ? toNumber(holdings[2], 8) : 0;
-
-  const usdcVal = usdcBal;
-  const wethVal = wethBal * ethPrice;
-  const wbtcVal = wbtcBal * btcPrice;
-  const totalVal = usdcVal + wethVal + wbtcVal;
-
-  const pct = (v) => totalVal > 0 ? (v / totalVal * 100) : 0;
-
-  // ------- Actions --------------------------------------------------------
-  async function handleDeposit() {
-    if (!depositAmount) return;
-    const amountIn = parseUnits(depositAmount, 6);
-    await writeContractAsync({ address: usdcAddress, abi: erc20Abi, functionName: "approve", args: [vaultAddress, amountIn] });
-    await writeContractAsync({ address: vaultAddress, abi: vaultAbi, functionName: "deposit", args: [amountIn, 500, 3000, 0, 0] });
-    setDepositAmount("");
-  }
-
-  async function handleWithdraw() {
-    if (!withdrawShares) return;
-    const sharesIn = parseUnits(withdrawShares, 18);
-    if (withdrawMode === 'assets') {
-      await writeContractAsync({ address: vaultAddress, abi: vaultAbi, functionName: "withdraw", args: [sharesIn] });
-    } else {
-      await writeContractAsync({ address: vaultAddress, abi: vaultAbi, functionName: "withdrawUSDC", args: [sharesIn, 500, 3000, 0n, 0n] });
+  useEffect(() => {
+    if (!FACTORY_ADDRESS) {
+      setError('FACTORY_ADDRESS not set in .env. Please set VITE_FACTORY_ADDRESS=0xYourAddress in .env file and restart the app.');
+      return;
     }
-    setWithdrawShares("");
-  }
+    console.log('FACTORY_ADDRESS:', FACTORY_ADDRESS);
+  }, []);
 
-  // ------- UI Components --------------------------------------------------
-  if (!isConnected) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center p-6">
-        <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-12 text-center max-w-md w-full border border-white/20 shadow-2xl">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-8">
-            <Wallet className="w-10 h-10 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-4">Crypto ETF</h1>
-          <p className="text-blue-200 mb-8 text-lg">Verbinden Sie Ihr Wallet um zu starten</p>
-          <button 
-            onClick={() => connect({ connector: metaMask() })}
-            className="w-full py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-2xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-3"
-          >
-            <Wallet className="w-5 h-5" />
-            MetaMask verbinden
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Read vault length from storage slot 0
+  const fetchVaultLength = async () => {
+    try {
+      const slot = 0n; // Slot 0 for vaults.length
+      const lengthHex = await publicClient.getStorageAt({
+        address: FACTORY_ADDRESS,
+        slot: `0x${slot.toString(16).padStart(64, '0')}`,
+      });
+      const lengthBigInt = hexToBigInt(lengthHex);
+      const length = Number(lengthBigInt);
+      setVaultLength(length);
+    } catch (err) {
+      console.error('Error reading vault length:', err);
+      setError('Fehler beim Auslesen der Vault-Länge.');
+    }
+  };
+
+  useEffect(() => {
+    if (isConnected && publicClient && FACTORY_ADDRESS) {
+      fetchVaultLength();
+    }
+  }, [isConnected, publicClient, refreshKey]);
+
+  // Batch read vault addresses
+  const vaultContracts = Array.from({ length: vaultLength }, (_, i) => ({
+    address: FACTORY_ADDRESS,
+    abi: FACTORY_ABI,
+    functionName: 'vaults',
+    args: [BigInt(i)],
+  }));
+
+  const { data: vaultsData } = useReadContracts({
+    contracts: vaultContracts,
+    query: { enabled: vaultLength > 0 && !!FACTORY_ADDRESS },
+  });
+
+  useEffect(() => {
+    if (vaultsData) {
+      const newVaults = vaultsData.map((item) => item.result).filter((v) => v);
+      setVaults(newVaults);
+      console.log('Fetched vaults:', newVaults);
+    }
+  }, [vaultsData]);
+
+  // Batch read vault data (getTokens, getAllocations, holdings, isRebalancer, totalAssets, totalSupply) for each vault
+  const vaultDataContracts = vaults.flatMap((vaultAddr) => [
+    {
+      address: vaultAddr,
+      abi: VAULT_ABI,
+      functionName: 'getTokens',
+    },
+    {
+      address: vaultAddr,
+      abi: VAULT_ABI,
+      functionName: 'getAllocations',
+    },
+    {
+      address: vaultAddr,
+      abi: VAULT_ABI,
+      functionName: 'holdings',
+    },
+    {
+      address: vaultAddr,
+      abi: VAULT_ABI,
+      functionName: 'isRebalancer',
+      args: [address],
+    },
+    {
+      address: vaultAddr,
+      abi: VAULT_ABI,
+      functionName: 'totalAssets',
+    },
+    {
+      address: vaultAddr,
+      abi: VAULT_ABI,
+      functionName: 'totalSupply',
+    },
+  ]);
+
+  const { data: vaultData } = useReadContracts({
+    contracts: vaultDataContracts,
+    query: { enabled: vaults.length > 0 },
+  });
+
+  useEffect(() => {
+    if (vaultData) {
+      const tokenSet = new Set();
+      const tempDetails = [];
+      for (let v = 0; v < vaults.length; v++) {
+        const baseIndex = v * 6;
+        const tokens = vaultData[baseIndex].result || [];
+        const percentages = (vaultData[baseIndex + 1].result || []).map(Number);
+        const [usdcBal, tokenBals] = vaultData[baseIndex + 2].result || [0n, []];
+        const isRebalancer = vaultData[baseIndex + 3].result || false;
+        const totalAssets = vaultData[baseIndex + 4].result || 0n;
+        const totalSupply = vaultData[baseIndex + 5].result || 0n;
+
+        tokens.forEach(token => tokenSet.add(token));
+
+        tempDetails[v] = {
+          address: vaults[v],
+          tokens,
+          percentages,
+          usdcBal,
+          tokenBals,
+          isRebalancer,
+          totalAssets,
+          totalSupply,
+        };
+      }
+      setAllTokens(Array.from(tokenSet));
+      setVaultDetails(tempDetails);
+    }
+  }, [vaultData, vaults, address]);
+
+  // Batch read symbol and decimals for all unique tokens
+  const tokenDataContracts = allTokens.flatMap((tokenAddr) => [
+    {
+      address: tokenAddr,
+      abi: ERC20_ABI,
+      functionName: 'symbol',
+    },
+    {
+      address: tokenAddr,
+      abi: ERC20_ABI,
+      functionName: 'decimals',
+    },
+  ]);
+
+  const { data: tokenData } = useReadContracts({
+    contracts: tokenDataContracts,
+    query: { enabled: allTokens.length > 0 },
+  });
+
+  useEffect(() => {
+    if (tokenData) {
+      const tempTokenDetailsMap = {};
+      for (let t = 0; t < allTokens.length; t++) {
+        const baseIndex = t * 2;
+        const symbol = tokenData[baseIndex].result || TOKEN_INFO[allTokens[t]]?.symbol || 'Unknown';
+        const decimals = Number(tokenData[baseIndex + 1].result) || TOKEN_INFO[allTokens[t]]?.decimals || 18;
+        tempTokenDetailsMap[allTokens[t]] = { symbol, decimals };
+      }
+      setTokenDetailsMap(tempTokenDetailsMap);
+
+      // Update vaultDetails with formatted balances and allocations
+      const updatedDetails = vaultDetails.map((detail) => {
+        const formattedUsdc = formatUnits(detail.usdcBal, USDC_DECIMALS);
+        const formattedTokens = detail.tokenBals.map((bal, index) => {
+          const tokenAddr = detail.tokens[index];
+          const { symbol, decimals } = tempTokenDetailsMap[tokenAddr] || { symbol: 'Unknown', decimals: 18 };
+          return { symbol, balance: formatUnits(bal, decimals) };
+        });
+        const formattedAllocations = detail.percentages.map((perc, index) => {
+          const tokenAddr = detail.tokens[index];
+          const { symbol } = tempTokenDetailsMap[tokenAddr] || { symbol: 'Unknown' };
+          return `${symbol}: ${perc}%`;
+        });
+        const formattedTotalValue = formatUnits(detail.totalAssets, USDC_DECIMALS);
+        let navPerShare = '0';
+        if (detail.totalSupply > 0n) {
+          navPerShare = formatUnits((detail.totalAssets * 10n ** 18n) / detail.totalSupply, USDC_DECIMALS);
+        }
+        return { ...detail, formattedUsdc, formattedTokens, formattedAllocations, formattedTotalValue, navPerShare };
+      });
+      setVaultDetails(updatedDetails);
+    }
+  }, [tokenData, allTokens, vaultDetails]);
+
+  // Batch read user balances, symbols, and decimals for each vault
+  const investmentContracts = vaults.flatMap((vaultAddr) => [
+    {
+      address: vaultAddr,
+      abi: ERC20_ABI,
+      functionName: 'balanceOf',
+      args: [address],
+    },
+    {
+      address: vaultAddr,
+      abi: ERC20_ABI,
+      functionName: 'symbol',
+    },
+    {
+      address: vaultAddr,
+      abi: ERC20_ABI,
+      functionName: 'decimals',
+    },
+  ]);
+
+  const { data: investmentData } = useReadContracts({
+    contracts: investmentContracts,
+    query: { enabled: vaults.length > 0 && isConnected && address },
+  });
+
+  useEffect(() => {
+    if (investmentData) {
+      const newInvestments = [];
+      for (let v = 0; v < vaults.length; v++) {
+        const baseIndex = v * 3;
+        const balance = investmentData[baseIndex].result || 0n;
+        const symbol = investmentData[baseIndex + 1].result || 'Unknown';
+        const decimals = Number(investmentData[baseIndex + 2].result) || 18;
+        const formattedBalance = formatUnits(balance, decimals);
+        if (balance > 0n) {
+          newInvestments.push({
+            address: vaults[v],
+            symbol,
+            balance: formattedBalance,
+          });
+        }
+      }
+      setUserInvestments(newInvestments);
+    }
+  }, [investmentData, vaults, address]);
+
+  // Functions for approve, deposit, withdraw, withdrawUSDC
+  const { writeContract, data: writeHash } = useWriteContract();
+
+  useEffect(() => {
+    if (writeHash) {
+      setTxHash(writeHash);
+    }
+  }, [writeHash]);
+
+  useEffect(() => {
+    if (txReceipt && txReceipt.status === 'success') {
+      setRefreshKey((k) => k + 1);
+    }
+  }, [txReceipt]);
+
+  const handleApprove = (vaultAddr, amountIn) => {
+    const scaledAmountIn = parseUnits(amountIn || '0', USDC_DECIMALS);
+    writeContract({
+      address: USDC_ADDRESS,
+      abi: ERC20_ABI,
+      functionName: 'approve',
+      args: [vaultAddr, scaledAmountIn],
+    });
+  };
+
+  const handleDeposit = (vaultAddr, amountIn, tokenLength) => {
+    const scaledAmountIn = parseUnits(amountIn || '0', USDC_DECIMALS);
+    const poolFees = Array(tokenLength).fill(500n);
+    const minOuts = Array(tokenLength).fill(0n);
+    writeContract({
+      address: vaultAddr,
+      abi: VAULT_ABI,
+      functionName: 'deposit',
+      args: [scaledAmountIn, poolFees, minOuts],
+    });
+  };
+
+  const handleWithdraw = (vaultAddr, shares) => {
+    const scaledShares = parseUnits(shares || '0', SHARES_DECIMALS);
+    writeContract({
+      address: vaultAddr,
+      abi: VAULT_ABI,
+      functionName: 'withdraw',
+      args: [scaledShares],
+    });
+  };
+
+  const handleWithdrawUSDC = (vaultAddr, shares, tokenLength) => {
+    const scaledShares = parseUnits(shares || '0', SHARES_DECIMALS);
+    const poolFees = Array(tokenLength).fill(500n);
+    const minOuts = Array(tokenLength).fill(0n);
+    writeContract({
+      address: vaultAddr,
+      abi: VAULT_ABI,
+      functionName: 'withdrawUSDC',
+      args: [scaledShares, poolFees, minOuts],
+    });
+  };
+
+  const handleAddAllocation = () => {
+    if (tokenPercent && !selectedAllocations.some(alloc => alloc.token === selectedToken)) {
+      setSelectedAllocations([...selectedAllocations, { token: selectedToken, percent: tokenPercent }]);
+      setTokenPercent('');
+    }
+  };
+
+  const handleRemoveAllocation = (token) => {
+    setSelectedAllocations(selectedAllocations.filter(alloc => alloc.token !== token));
+  };
+
+  const handleCreate = () => {
+    const tokenNames = selectedAllocations.map(alloc => alloc.token);
+    const percentages = selectedAllocations.map(alloc => BigInt(alloc.percent));
+    writeContract({
+      address: FACTORY_ADDRESS,
+      abi: FACTORY_ABI,
+      functionName: 'createVault',
+      args: [tokenNames, percentages, vaultName, vaultSymbol],
+    });
+    // Reset form after creation
+    setSelectedAllocations([]);
+    setVaultName('');
+    setVaultSymbol('');
+  };
+
+  const handleAddRebalanceAllocation = (index) => {
+    const percent = rebalanceTokenPercents[index] || '';
+    const token = selectedRebalanceTokens[index] || TOKEN_OPTIONS[0];
+    const allocs = rebalanceAllocations[index] || [];
+    if (percent && !allocs.some(alloc => alloc.token === token)) {
+      setRebalanceAllocations({
+        ...rebalanceAllocations,
+        [index]: [...allocs, { token, percent }]
+      });
+      setRebalanceTokenPercents({
+        ...rebalanceTokenPercents,
+        [index]: ''
+      });
+    }
+  };
+
+  const handleRemoveRebalanceAllocation = (index, token) => {
+    const allocs = rebalanceAllocations[index] || [];
+    setRebalanceAllocations({
+      ...rebalanceAllocations,
+      [index]: allocs.filter(alloc => alloc.token !== token)
+    });
+  };
+
+  const handleRebalance = (index, vaultAddr, currentTokenLength) => {
+    const allocs = rebalanceAllocations[index] || [];
+    const newTokenNames = allocs.map(alloc => alloc.token);
+    const newPercentages = allocs.map(alloc => BigInt(alloc.percent));
+    const poolFeesToUSDC = Array(currentTokenLength).fill(500n);
+    const minOutsToUSDC = Array(currentTokenLength).fill(0n);
+    const poolFeesFromUSDC = Array(newTokenNames.length).fill(500n);
+    const minOutsFromUSDC = Array(newTokenNames.length).fill(0n);
+    writeContract({
+      address: vaultAddr,
+      abi: VAULT_ABI,
+      functionName: 'rebalance',
+      args: [newTokenNames, newPercentages, poolFeesToUSDC, minOutsToUSDC, poolFeesFromUSDC, minOutsFromUSDC],
+    });
+    // Reset after rebalance
+    setRebalanceAllocations({
+      ...rebalanceAllocations,
+      [index]: []
+    });
+  };
+
+  const handleInputChange = (type, index, value) => {
+    if (type === 'deposit') {
+      setDepositAmounts((prev) => ({ ...prev, [index]: value }));
+    } else if (type === 'withdraw') {
+      setWithdrawAmounts((prev) => ({ ...prev, [index]: value }));
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                <PieChart className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Crypto ETF</h1>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-xl">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-sm font-medium text-gray-700">
-                  {address?.slice(0, 6)}...{address?.slice(-4)}
-                </span>
-              </div>
-              <button 
-                onClick={disconnect}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                title="Disconnect"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Portfolio Overview */}
-        <div className="mb-8">
-          <div className="text-center mb-8">
-            <h2 className="text-lg font-medium text-gray-600 mb-2">Your Share Value</h2>
-            <div className="text-5xl font-bold text-gray-900 mb-4">{formatCurrency(walletValue)}</div>
-            <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
-              <span>{formatNumber(walletShares, 6)} vETF Shares</span>
-              <span>•</span>
-              <span>NAV: ${formatNumber(navPerShare, 6)}</span>
-            </div>
-          </div>
-
-          {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <BarChart3 className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Fund AUM</p>
-                  <p className="text-xl font-bold text-gray-900">{formatCurrency(totalVal)}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Performance</p>
-                  <p className="text-xl font-bold text-green-600">+12.4%</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
-                  <Coins className="w-5 h-5 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">ETH Preis</p>
-                  <p className="text-xl font-bold text-gray-900">{formatCurrency(ethPrice)}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
-                  <Coins className="w-5 h-5 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">BTC Preis</p>
-                  <p className="text-xl font-bold text-gray-900">{formatCurrency(btcPrice)}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Portfolio Allocation */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="p-6 border-b border-gray-100">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-gray-900">Asset Allocation</h3>
-                  <RefreshCw className="w-5 h-5 text-gray-400" />
-                </div>
-              </div>
-              
-              <div className="p-6">
-                {/* Donut Chart Visualization */}
-                <div className="flex items-center justify-center mb-8">
-                  <div className="relative w-48 h-48">
-                    <svg className="w-48 h-48 transform -rotate-90" viewBox="0 0 100 100">
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="35"
-                        fill="none"
-                        stroke="#f3f4f6"
-                        strokeWidth="12"
-                      />
-                      {/* USDC Segment */}
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="35"
-                        fill="none"
-                        stroke="#10b981"
-                        strokeWidth="12"
-                        strokeDasharray={`${pct(usdcVal) * 2.2} 220`}
-                        strokeDashoffset="0"
-                        className="transition-all duration-500"
-                      />
-                      {/* ETH Segment */}
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="35"
-                        fill="none"
-                        stroke="#3b82f6"
-                        strokeWidth="12"
-                        strokeDasharray={`${pct(wethVal) * 2.2} 220`}
-                        strokeDashoffset={`-${pct(usdcVal) * 2.2}`}
-                        className="transition-all duration-500"
-                      />
-                      {/* BTC Segment */}
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="35"
-                        fill="none"
-                        stroke="#f59e0b"
-                        strokeWidth="12"
-                        strokeDasharray={`${pct(wbtcVal) * 2.2} 220`}
-                        strokeDashoffset={`-${(pct(usdcVal) + pct(wethVal)) * 2.2}`}
-                        className="transition-all duration-500"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalVal)}</p>
-                        <p className="text-sm text-gray-500">Fund AUM</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Asset Details */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                      <div>
-                        <p className="font-semibold text-gray-900">USDC</p>
-                        <p className="text-sm text-gray-500">{formatNumber(usdcBal)} USDC</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">{formatCurrency(usdcVal)}</p>
-                      <p className="text-sm text-gray-500">{formatNumber(pct(usdcVal), 1)}%</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                      <div>
-                        <p className="font-semibold text-gray-900">Ethereum</p>
-                        <p className="text-sm text-gray-500">{formatNumber(wethBal, 6)} ETH</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">{formatCurrency(wethVal)}</p>
-                      <p className="text-sm text-gray-500">{formatNumber(pct(wethVal), 1)}%</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                      <div>
-                        <p className="font-semibold text-gray-900">Bitcoin</p>
-                        <p className="text-sm text-gray-500">{formatNumber(wbtcBal, 6)} BTC</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">{formatCurrency(wbtcVal)}</p>
-                      <p className="text-sm text-gray-500">{formatNumber(pct(wbtcVal), 1)}%</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions Panel */}
-          <div className="space-y-6">
-            {/* Deposit */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                    <ArrowUpRight className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Einzahlung</h3>
-                    <p className="text-sm text-gray-600">USDC hinzufügen</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Betrag (USDC)
-                  </label>
+    <div style={{ padding: '20px' }}>
+      <h1>Vaults Dashboard</h1>
+      <ConnectButton />
+      {error ? (
+        <p style={{ color: 'red' }}>{error}</p>
+      ) : isConnected ? (
+        <div>
+          <p>Connected as: {address}</p>
+          <h2>Create New Vault</h2>
+          <input
+            type="text"
+            placeholder="Vault Name"
+            value={vaultName}
+            onChange={(e) => setVaultName(e.target.value)}
+          />
+          <input
+            type="text"
+            placeholder="Vault Symbol"
+            value={vaultSymbol}
+            onChange={(e) => setVaultSymbol(e.target.value)}
+          />
+          <h3>Add Allocations</h3>
+          <select value={selectedToken} onChange={(e) => setSelectedToken(e.target.value)}>
+            {TOKEN_OPTIONS.map(option => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+          <input
+            type="number"
+            placeholder="Percent"
+            value={tokenPercent}
+            onChange={(e) => setTokenPercent(e.target.value)}
+          />
+          <button onClick={handleAddAllocation}>Add Token</button>
+          <ul>
+            {selectedAllocations.map((alloc, idx) => (
+              <li key={idx}>
+                {alloc.token}: {alloc.percent}% 
+                <button onClick={() => handleRemoveAllocation(alloc.token)}>Remove</button>
+              </li>
+            ))}
+          </ul>
+          <button onClick={handleCreate} disabled={selectedAllocations.length === 0}>Create Vault</button>
+          <p>Anzahl der Vaults: {vaultLength}</p>
+          {vaultLength > 0 ? (
+            <ul>
+              {vaultDetails.map((detail, index) => {
+                const ourInv = userInvestments.find(inv => inv.address === detail.address);
+                const positionValue = ourInv ? (parseFloat(ourInv.balance) * parseFloat(detail.navPerShare)).toFixed(2) : '0';
+                return (
+                <li key={index}>
+                  Vault {index}: {detail.address}
+                  <ul>
+                    <li>Allocations: {detail.formattedAllocations?.join(', ') || 'None'}</li>
+                    <li>Total Value: {detail.formattedTotalValue} USDC</li>
+                    <li>NAV per Share: {detail.navPerShare} USDC</li>
+                    <li>{USDC_SYMBOL}: {detail.formattedUsdc || '0'}</li>
+                    {detail.formattedTokens?.map((token, tIndex) => (
+                      <li key={tIndex}>{token.symbol}: {token.balance}</li>
+                    ))}
+                    <li>
+                      Your Shares: {ourInv?.balance || '0'} {ourInv?.symbol || 'Unknown'}
+                    </li>
+                    <li>Your Position Value: {positionValue} USDC</li>
+                  </ul>
                   <input
                     type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-lg"
+                    placeholder="USDC Amount to Deposit"
+                    onChange={(e) => handleInputChange('deposit', index, e.target.value)}
                   />
-                </div>
-                <button
-                  onClick={handleDeposit}
-                  className="w-full py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  Einzahlen
-                </button>
-              </div>
-            </div>
-
-            {/* Withdraw */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <ArrowDownLeft className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Auszahlung</h3>
-                    <p className="text-sm text-gray-600">vETF Shares verkaufen</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Shares (vETF)
-                  </label>
+                  <button onClick={() => handleApprove(vaults[index], depositAmounts[index] || '0')}>Approve USDC</button>
+                  <button onClick={() => handleDeposit(vaults[index], depositAmounts[index] || '0', detail.tokens.length)}>Invest</button>
                   <input
                     type="number"
-                    min="0"
-                    step="0.000001"
-                    placeholder="0.000000"
-                    value={withdrawShares}
-                    onChange={(e) => setWithdrawShares(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-lg"
+                    placeholder="Shares to Withdraw"
+                    onChange={(e) => handleInputChange('withdraw', index, e.target.value)}
                   />
-                </div>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm text-gray-700">
-                    <input
-                      type="radio"
-                      checked={withdrawMode === 'assets'}
-                      onChange={() => setWithdrawMode('assets')}
-                      className="form-radio text-blue-600"
-                    />
-                    Pro-rata Assets (USDC, ETH, BTC)
-                  </label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700">
-                    <input
-                      type="radio"
-                      checked={withdrawMode === 'usdc'}
-                      onChange={() => setWithdrawMode('usdc')}
-                      className="form-radio text-blue-600"
-                    />
-                    Alles in USDC (ETH/BTC swappen)
-                  </label>
-                </div>
-                <button
-                  onClick={handleWithdraw}
-                  className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  Auszahlen
-                </button>
-              </div>
-            </div>
-          </div>
+                  <button onClick={() => handleWithdraw(vaults[index], withdrawAmounts[index] || '0')}>Withdraw Pro-Rata</button>
+                  <button onClick={() => handleWithdrawUSDC(vaults[index], withdrawAmounts[index] || '0', detail.tokens.length)}>Withdraw USDC</button>
+                  {detail.isRebalancer && (
+                    <div>
+                      <h3>Rebalance this Vault</h3>
+                      <select
+                        value={selectedRebalanceTokens[index] || TOKEN_OPTIONS[0]}
+                        onChange={(e) => setSelectedRebalanceTokens({...selectedRebalanceTokens, [index]: e.target.value})}
+                      >
+                        {TOKEN_OPTIONS.map(option => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        placeholder="Percent"
+                        value={rebalanceTokenPercents[index] || ''}
+                        onChange={(e) => setRebalanceTokenPercents({...rebalanceTokenPercents, [index]: e.target.value})}
+                      />
+                      <button onClick={() => handleAddRebalanceAllocation(index)}>Add Token</button>
+                      <ul>
+                        {(rebalanceAllocations[index] || []).map((alloc, idx) => (
+                          <li key={idx}>
+                            {alloc.token}: {alloc.percent}% 
+                            <button onClick={() => handleRemoveRebalanceAllocation(index, alloc.token)}>Remove</button>
+                          </li>
+                        ))}
+                      </ul>
+                      <button onClick={() => handleRebalance(index, vaults[index], detail.tokens.length)} disabled={(rebalanceAllocations[index] || []).length === 0}>Rebalance</button>
+                    </div>
+                  )}
+                </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p>Keine Vaults vorhanden.</p>
+          )}
+          <h2>Deine Investments</h2>
+          {userInvestments.length > 0 ? (
+            <ul>
+              {userInvestments.map((inv, index) => (
+                <li key={index}>
+                  Vault: {inv.address} - {inv.balance} {inv.symbol}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>Du bist in keinen Vault investiert.</p>
+          )}
         </div>
-      </div>
+      ) : (
+        <p>Bitte verbinde deine Wallet mit MetaMask.</p>
+      )}
     </div>
   );
-}
+};
 
-//--------------------------------------------------------------------------
-// App Wrapper
-//--------------------------------------------------------------------------
-export default function App() {
-  return (
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <VaultUI />
-      </QueryClientProvider>
-    </WagmiProvider>
-  );
-}
+export default App;

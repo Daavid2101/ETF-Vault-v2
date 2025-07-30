@@ -1,4 +1,6 @@
-node_modules
+Crontract/node_modules
+New Frontend/node_modules
+Contract/artifacts
 .env
 
 # Hardhat files

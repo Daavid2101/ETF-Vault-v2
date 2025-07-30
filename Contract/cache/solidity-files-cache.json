@@ -1,18 +1,19 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v1 deploy/Contract/contracts/Vault.sol": {
-      "lastModificationDate": 1753727445037,
-      "contentHash": "41d2b3aa352bce0aa51d6f0e8f4e787e",
-      "sourceName": "contracts/Vault.sol",
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/contracts/ETFVaultV2.sol": {
+      "lastModificationDate": 1753809874052,
+      "contentHash": "592d9e97308bd456d9bab13d224c0cac",
+      "sourceName": "contracts/ETFVaultV2.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -41,21 +42,22 @@
         "^0.8.24"
       ],
       "artifacts": [
-        "ETFVault"
+        "ETFVaultV2"
       ]
     },
-    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v1 deploy/Contract/contracts/interfaces/ISwapRouter02_08.sol": {
-      "lastModificationDate": 1753706967510,
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/contracts/interfaces/ISwapRouter02_08.sol": {
+      "lastModificationDate": 1753776902811,
       "contentHash": "07a4a1aed1bd3c0ac0c2dd26458953d4",
       "sourceName": "contracts/interfaces/ISwapRouter02_08.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -80,18 +82,19 @@
         "ISwapRouter02"
       ]
     },
-    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v1 deploy/Contract/node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol": {
-      "lastModificationDate": 1753706887685,
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol": {
+      "lastModificationDate": 1753776909675,
       "contentHash": "190613e556d509d9e9a0ea43dc5d891d",
       "sourceName": "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -116,18 +119,19 @@
         "ReentrancyGuard"
       ]
     },
-    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v1 deploy/Contract/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
-      "lastModificationDate": 1753706887680,
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
+      "lastModificationDate": 1753776909671,
       "contentHash": "d3c790edc9ccf808a17c5a6cd13614fd",
       "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -154,18 +158,19 @@
         "Ownable"
       ]
     },
-    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v1 deploy/Contract/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
-      "lastModificationDate": 1753706887589,
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
+      "lastModificationDate": 1753776909655,
       "contentHash": "59dfce11284f2636db261df9b6a18f81",
       "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -195,18 +200,19 @@
         "ERC20"
       ]
     },
-    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v1 deploy/Contract/node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": {
-      "lastModificationDate": 1753706887688,
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": {
+      "lastModificationDate": 1753776909655,
       "contentHash": "1fb9edee1d763745a62d0b1954998792",
       "sourceName": "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -234,18 +240,19 @@
         "SafeERC20"
       ]
     },
-    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v1 deploy/Contract/node_modules/@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol": {
-      "lastModificationDate": 1753706887759,
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/node_modules/@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol": {
+      "lastModificationDate": 1753776906315,
       "contentHash": "64a3f906dc7696aa3c9fa8454b673be7",
       "sourceName": "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -270,18 +277,19 @@
         "AggregatorV3Interface"
       ]
     },
-    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v1 deploy/Contract/node_modules/@openzeppelin/contracts/utils/Context.sol": {
-      "lastModificationDate": 1753706887537,
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/node_modules/@openzeppelin/contracts/utils/Context.sol": {
+      "lastModificationDate": 1753776909689,
       "contentHash": "67bfbc07588eb8683b3fd8f6f909563e",
       "sourceName": "@openzeppelin/contracts/utils/Context.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -306,54 +314,19 @@
         "Context"
       ]
     },
-    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v1 deploy/Contract/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
-      "lastModificationDate": 1753706887662,
-      "contentHash": "9261adf6457863de3e9892f51317ec89",
-      "sourceName": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
-      "solcConfig": {
-        "version": "0.8.24",
-        "settings": {
-          "evmVersion": "paris",
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        ">=0.4.16"
-      ],
-      "artifacts": [
-        "IERC20"
-      ]
-    },
-    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v1 deploy/Contract/node_modules/@openzeppelin/contracts/interfaces/draft-IERC6093.sol": {
-      "lastModificationDate": 1753706887561,
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/node_modules/@openzeppelin/contracts/interfaces/draft-IERC6093.sol": {
+      "lastModificationDate": 1753776909776,
       "contentHash": "5041977bbe908de2e6ed0270447f79ad",
       "sourceName": "@openzeppelin/contracts/interfaces/draft-IERC6093.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -380,18 +353,56 @@
         "IERC721Errors"
       ]
     },
-    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v1 deploy/Contract/node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol": {
-      "lastModificationDate": 1753706887663,
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+      "lastModificationDate": 1753776909655,
+      "contentHash": "9261adf6457863de3e9892f51317ec89",
+      "sourceName": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.4.16"
+      ],
+      "artifacts": [
+        "IERC20"
+      ]
+    },
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol": {
+      "lastModificationDate": 1753776909657,
       "contentHash": "513778b30d2750f5d2b9b19bbcf748a5",
       "sourceName": "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -418,18 +429,19 @@
         "IERC20Metadata"
       ]
     },
-    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v1 deploy/Contract/node_modules/@openzeppelin/contracts/interfaces/IERC1363.sol": {
-      "lastModificationDate": 1753706887657,
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/node_modules/@openzeppelin/contracts/interfaces/IERC1363.sol": {
+      "lastModificationDate": 1753776909779,
       "contentHash": "a7fd0f05e36b0d0a21c75340c9c639ec",
       "sourceName": "@openzeppelin/contracts/interfaces/IERC1363.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -457,18 +469,19 @@
         "IERC1363"
       ]
     },
-    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v1 deploy/Contract/node_modules/@openzeppelin/contracts/interfaces/IERC20.sol": {
-      "lastModificationDate": 1753706887662,
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/node_modules/@openzeppelin/contracts/interfaces/IERC20.sol": {
+      "lastModificationDate": 1753776909772,
       "contentHash": "68620db2da7583d9a4919096ac77f577",
       "sourceName": "@openzeppelin/contracts/interfaces/IERC20.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -493,18 +506,19 @@
       ],
       "artifacts": []
     },
-    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v1 deploy/Contract/node_modules/@openzeppelin/contracts/interfaces/IERC165.sol": {
-      "lastModificationDate": 1753706887658,
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/node_modules/@openzeppelin/contracts/interfaces/IERC165.sol": {
+      "lastModificationDate": 1753776909782,
       "contentHash": "947853028399b7de34bcc3704ee06e99",
       "sourceName": "@openzeppelin/contracts/interfaces/IERC165.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -529,18 +543,19 @@
       ],
       "artifacts": []
     },
-    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v1 deploy/Contract/node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
-      "lastModificationDate": 1753706887659,
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
+      "lastModificationDate": 1753776909682,
       "contentHash": "7074c93b1ea0a122063f26ddd1db1032",
       "sourceName": "@openzeppelin/contracts/utils/introspection/IERC165.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -563,6 +578,89 @@
       ],
       "artifacts": [
         "IERC165"
+      ]
+    },
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/contracts/VaultFactory.sol": {
+      "lastModificationDate": 1753810073802,
+      "contentHash": "0d5fad01519941724ca64848ab0f7db7",
+      "sourceName": "contracts/VaultFactory.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./ETFVaultV2.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "VaultFactory"
+      ]
+    },
+    "/Users/davidbuchsenschutz/digser/DeFi/ETF Vault v2/Contract/contracts/Vault.sol": {
+      "lastModificationDate": 1753799417116,
+      "contentHash": "2c4434f044d9d0ed06c76792fa943646",
+      "sourceName": "contracts/Vault.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol",
+        "./interfaces/ISwapRouter02_08.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "ETFVault"
       ]
     }
   }
