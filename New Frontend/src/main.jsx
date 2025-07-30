@@ -6,6 +6,7 @@ import { WagmiProvider } from 'wagmi';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { config, queryClient } from './rainbowkit-config.js';
+import "./index.css";
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
